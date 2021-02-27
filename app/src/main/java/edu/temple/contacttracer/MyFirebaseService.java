@@ -39,15 +39,14 @@ public class MyFirebaseService extends FirebaseMessagingService {
     @Override
     public void onCreate() {
         super.onCreate();
-
-        subscribeToTopics();
+        
     }
 
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
 
-
+        Log.d("Broadcast", "Firebase Service");
 
         String data = remoteMessage.getData().get("payload");
         Intent firebaseMessage = new Intent();

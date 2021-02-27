@@ -18,11 +18,28 @@ import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
 
+import com.android.volley.AuthFailureError;
+import com.android.volley.NetworkResponse;
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.VolleyLog;
+import com.android.volley.toolbox.HttpHeaderParser;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.UnsupportedEncodingException;
+
 
 public class MyLocationService extends Service {
 
     LocationManager locationManager;
     LocationListener locationListener;
+    BroadcastReceiver broadcastReceiver;
 
     Location lastLocation;
     SharedPreferences sharedPreferences;
@@ -52,7 +69,7 @@ public class MyLocationService extends Service {
             public void onLocationChanged(Location location) {
                 if (lastLocation != null) {
                     if (location.getTime() - lastLocation.getTime() >= (tracingTime * 1000)) {
-                        tracePointDetected();
+                        tracePointDetected(lastLocation.getTime(), location.getTime());
                     }
                 }
                 lastLocation = location;
@@ -63,7 +80,7 @@ public class MyLocationService extends Service {
             public void onProviderDisabled(String provider) {}
         };
 
-        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+        broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
                 String text = intent.getStringExtra("data");
@@ -105,15 +122,73 @@ public class MyLocationService extends Service {
     /** Should be called when a user has loitered in a location for
      * longer than the designated time.
      */
-    private void tracePointDetected() {
+    private void tracePointDetected(long began, long stopped)  {
         String message = lastLocation.getLatitude() + " - " + lastLocation.getLongitude() + " at " + lastLocation.getTime();
         Log.i("Trace Data", message);
+
+        RequestQueue queue = Volley.newRequestQueue(this);
+
+        String url = "https://kamorris.com/lab/ct_tracking.php";
+
+        JSONObject jsonBody = new JSONObject();
+        try {
+            jsonBody.put("uuid", UUIDContainer.getUUIDContainer(this).getCurrentUUID().getUuid());
+            jsonBody.put("latitude", lastLocation.getLatitude());
+            jsonBody.put("longitude", lastLocation.getLongitude());
+            jsonBody.put("sedentary_start", began);
+            jsonBody.put("sedentary_stop", stopped);
+
+            final String requestBody = jsonBody.toString();
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
+
+                @Override
+                public void onResponse(String response) {
+                    Log.d("POST", "Post response given: " + response);
+                }
+            },new Response.ErrorListener(){
+                @Override
+                public void onErrorResponse(VolleyError error){
+
+                }
+            }) {
+                @Override
+                public String getBodyContentType() {
+                    return "application/json; charset=utf-8";
+                }
+
+                @Override
+                public byte[] getBody() throws AuthFailureError {
+                    try{
+                        return requestBody == null ? null : requestBody.getBytes("utf-8");
+                    } catch (UnsupportedEncodingException e) {
+                        VolleyLog.wtf("Unsupported Encoding");
+                        return null;
+                    }
+                }
+
+                @Override
+                protected Response<String> parseNetworkResponse(NetworkResponse response) {
+                    String responseString = "";
+                    if(response != null){
+                        responseString = String.valueOf(response.statusCode);
+
+                    }
+                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
+                }
+            };
+
+            queue.add(stringRequest);
+        }
+        catch (JSONException e){
+            e.printStackTrace();
+        }
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
-
+        unregisterReceiver(broadcastReceiver);
         // Memory leaks are bad, m'kay?
         locationManager.removeUpdates(locationListener);
     }
