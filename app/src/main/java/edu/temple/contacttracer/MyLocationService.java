@@ -33,6 +33,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class MyLocationService extends Service {
@@ -43,6 +45,7 @@ public class MyLocationService extends Service {
 
     Location lastLocation;
     SharedPreferences sharedPreferences;
+    public UUIDContainer uuidContainer;
 
     private int tracingTime;
     private final int LOCATION_UPDATE_DISTANCE = 10;
@@ -60,8 +63,9 @@ public class MyLocationService extends Service {
         super.onCreate();
 
 
-        tracingTime = 60;
+        tracingTime = 10;
 
+        uuidContainer = UUIDContainer.getUUIDContainer(this);
 
         locationManager = getSystemService(LocationManager.class);
         locationListener = new LocationListener() {
@@ -130,59 +134,35 @@ public class MyLocationService extends Service {
 
         String url = "https://kamorris.com/lab/ct_tracking.php";
 
-        JSONObject jsonBody = new JSONObject();
-        try {
-            jsonBody.put("uuid", UUIDContainer.getUUIDContainer(this).getCurrentUUID().getUuid());
-            jsonBody.put("latitude", lastLocation.getLatitude());
-            jsonBody.put("longitude", lastLocation.getLongitude());
-            jsonBody.put("sedentary_start", began);
-            jsonBody.put("sedentary_stop", stopped);
+        StringRequest request = new StringRequest(Request.Method.POST, url, response -> {
+            if(response.contains("OK")) Log.d("API","Successfully sent location to server");
+            else{
+                Log.d("API", "Failed to send location to remote server");
+            }
+        }, error -> {
+            Log.d("API", "ERROR failed to send location to remote server");
+            Log.d("API ERROR", error.toString());
+        }){
+            @Override
+            protected Map<String, String> getParams() throws AuthFailureError {
 
-            final String requestBody = jsonBody.toString();
+                return new HashMap<String, String>(){{
+                    put("uuid", uuidContainer.getCurrentUUID().getUuid().toString());
+                    put("latitude", String.valueOf(lastLocation.getLatitude()));
+                    put("longitude", String.valueOf(lastLocation.getLongitude()));
+                    put("sedentary_begin", String.valueOf(began));
+                    put("sedentary_end", String.valueOf(stopped));
+                }};
+            }
 
-            StringRequest stringRequest = new StringRequest(Request.Method.POST, url, new Response.Listener<String>() {
-
-                @Override
-                public void onResponse(String response) {
-                    Log.d("POST", "Post response given: " + response);
-                }
-            },new Response.ErrorListener(){
-                @Override
-                public void onErrorResponse(VolleyError error){
-
-                }
-            }) {
-                @Override
-                public String getBodyContentType() {
-                    return "application/json; charset=utf-8";
-                }
-
-                @Override
-                public byte[] getBody() throws AuthFailureError {
-                    try{
-                        return requestBody == null ? null : requestBody.getBytes("utf-8");
-                    } catch (UnsupportedEncodingException e) {
-                        VolleyLog.wtf("Unsupported Encoding");
-                        return null;
-                    }
-                }
-
-                @Override
-                protected Response<String> parseNetworkResponse(NetworkResponse response) {
-                    String responseString = "";
-                    if(response != null){
-                        responseString = String.valueOf(response.statusCode);
-
-                    }
-                    return Response.success(responseString, HttpHeaderParser.parseCacheHeaders(response));
-                }
-            };
-
-            queue.add(stringRequest);
-        }
-        catch (JSONException e){
-            e.printStackTrace();
-        }
+            @Override
+            public Map<String, String> getHeaders() throws AuthFailureError {
+                return new HashMap<String, String>(){{
+                    put("Content-Type", "application/x-www-form-urlencoded");
+                }};
+            }
+        };
+        queue.add(request);
     }
 
     @Override

@@ -74,6 +74,7 @@ public class MainActivity extends AppCompatActivity implements DashboardFragment
         startService(firebaseIntent);
         MyFirebaseService.subscribeToTopics();
 
+
     }
 
     @Override
