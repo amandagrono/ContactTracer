@@ -13,10 +13,14 @@ import android.content.pm.PackageManager;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 import android.util.Log;
+
+import androidx.annotation.RequiresApi;
+import androidx.core.app.ActivityCompat;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.NetworkResponse;
@@ -44,8 +48,10 @@ public class MyLocationService extends Service {
     BroadcastReceiver broadcastReceiver;
 
     Location lastLocation;
+
     SharedPreferences sharedPreferences;
     public UUIDContainer uuidContainer;
+    LocationContainer locationContainer;
 
     private int tracingTime;
     private final int LOCATION_UPDATE_DISTANCE = 10;
@@ -66,6 +72,7 @@ public class MyLocationService extends Service {
         tracingTime = 10;
 
         uuidContainer = UUIDContainer.getUUIDContainer(this);
+        locationContainer = LocationContainer.getLocationContainer(this);
 
         locationManager = getSystemService(LocationManager.class);
         locationListener = new LocationListener() {
@@ -79,9 +86,14 @@ public class MyLocationService extends Service {
                 lastLocation = location;
             }
 
-            public void onStatusChanged(String provider, int status, Bundle extras) { }
-            public void onProviderEnabled(String provider) {}
-            public void onProviderDisabled(String provider) {}
+            public void onStatusChanged(String provider, int status, Bundle extras) {
+            }
+
+            public void onProviderEnabled(String provider) {
+            }
+
+            public void onProviderDisabled(String provider) {
+            }
         };
 
         broadcastReceiver = new BroadcastReceiver() {
@@ -89,9 +101,79 @@ public class MyLocationService extends Service {
             public void onReceive(Context context, Intent intent) {
                 String text = intent.getStringExtra("data");
                 Log.d("Broadcast Test", text);
+                onBroadcastReceived(text);
+
+
             }
         };
         registerReceiver(broadcastReceiver, new IntentFilter(MyFirebaseService.INTENT_ACTION));
+
+    }
+
+
+    private void onBroadcastReceived(String data) {
+        try {
+            JSONObject jsonObject = new JSONObject(data);
+
+            String uuid = jsonObject.getString("uuid");
+            double latitude = Double.parseDouble(jsonObject.getString("latitude"));
+            double longitude = Double.parseDouble(jsonObject.getString("longitude"));
+            long sedentary_begin = Long.parseLong(jsonObject.getString("sedentary_begin"));
+            long sedentary_end = Long.parseLong(jsonObject.getString("sedentary_end"));
+            Location location = new Location(LocationManager.GPS_PROVIDER);
+            location.setLatitude(latitude);
+            location.setLongitude(longitude);
+
+            if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                // TODO: Consider calling
+                //    ActivityCompat#requestPermissions
+                // here to request the missing permissions, and then overriding
+                //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
+                //                                          int[] grantResults)
+                // to handle the case where the user grants the permission. See the documentation
+                // for ActivityCompat#requestPermissions for more details.
+                return;
+            }
+
+
+            if(!jsonObject.getString("uuid").equals(uuidContainer.getCurrentUUID().getUuid().toString())){
+                Log.d("UUID filter test","UUID filter works");
+
+
+                //Log.d("Distance", String.valueOf(location.distanceTo(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER))));
+                //changed the distanceTo Comparisons to 50 to test and make sure it worked.
+                if(lastLocation == null){
+                    if(location.distanceTo(locationManager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)) <= 50){
+                        Log.d("Location Save", "Distance To Function Called");
+                        saveData(uuid, latitude, longitude, sedentary_begin, sedentary_end);
+                    }
+                }
+                else{
+                    if(location.distanceTo(lastLocation) <= 50){
+                        //save data of location
+                        Log.d("Location Save", "Distance To Function Called");
+                        saveData(uuid, latitude, longitude, sedentary_begin, sedentary_end);
+                    }
+                }
+
+
+
+            }
+
+
+        }
+        catch (JSONException e){
+            e.printStackTrace();
+        }
+
+
+    }
+
+
+    private void saveData(String uuid, double latitude, double longitude, long sedentary_begin, long sedentary_end){
+        MyLocation myLocation = new MyLocation(uuid, latitude, longitude, sedentary_begin, sedentary_end);
+        Log.d("Location Save", "Save Data Called");
+        locationContainer.addLocation(myLocation);
 
     }
 
@@ -144,7 +226,7 @@ public class MyLocationService extends Service {
             Log.d("API ERROR", error.toString());
         }){
             @Override
-            protected Map<String, String> getParams() throws AuthFailureError {
+            protected Map<String, String> getParams() {
 
                 return new HashMap<String, String>(){{
                     put("uuid", uuidContainer.getCurrentUUID().getUuid().toString());
@@ -156,7 +238,7 @@ public class MyLocationService extends Service {
             }
 
             @Override
-            public Map<String, String> getHeaders() throws AuthFailureError {
+            public Map<String, String> getHeaders() {
                 return new HashMap<String, String>(){{
                     put("Content-Type", "application/x-www-form-urlencoded");
                 }};
