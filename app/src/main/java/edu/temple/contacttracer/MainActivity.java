@@ -10,7 +10,13 @@ import android.app.NotificationManager;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.util.Log;
 import android.widget.Toast;
+
+import com.google.android.gms.tasks.OnCompleteListener;
+import com.google.android.gms.tasks.OnSuccessListener;
+import com.google.android.gms.tasks.Task;
+import com.google.firebase.messaging.FirebaseMessaging;
 
 import java.util.Calendar;
 import java.util.Objects;
@@ -20,6 +26,8 @@ public class MainActivity extends AppCompatActivity implements DashboardFragment
     FragmentManager fm;
     Intent serviceIntent;
     UUIDContainer uuidContainer;
+
+    Intent firebaseIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,6 +63,7 @@ public class MainActivity extends AppCompatActivity implements DashboardFragment
         }
 
         serviceIntent = new Intent(this, MyLocationService.class);
+        firebaseIntent = new Intent(this, MyFirebaseService.class);
 
         fm = getSupportFragmentManager();
 
@@ -62,11 +71,15 @@ public class MainActivity extends AppCompatActivity implements DashboardFragment
             fm.beginTransaction()
                     .add(R.id.frameLayout, new DashboardFragment())
                     .commit();
+        startService(firebaseIntent);
+        MyFirebaseService.subscribeToTopics();
+
     }
 
     @Override
     public void startService() {
         startService(serviceIntent);
+
     }
 
     @Override

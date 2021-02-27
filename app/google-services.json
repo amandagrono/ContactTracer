@@ -1,34 +1,34 @@
 {
   "project_info": {
-    "project_number": "351299622063",
-    "firebase_url": "https://newagent-myotpc.firebaseio.com",
-    "project_id": "newagent-myotpc",
-    "storage_bucket": "newagent-myotpc.appspot.com"
+    "project_number": "764849138700",
+    "firebase_url": "https://myfcmapp-3da61.firebaseio.com",
+    "project_id": "myfcmapp-3da61",
+    "storage_bucket": "myfcmapp-3da61.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:351299622063:android:3fbb684e2fcc0a9aadf05a",
+        "mobilesdk_app_id": "1:764849138700:android:e3127d0306f4a84bd65229",
         "android_client_info": {
-          "package_name": "edu.temple.contacttracingtrytwo"
+          "package_name": "edu.temple.contacttracer"
         }
       },
       "oauth_client": [
         {
-          "client_id": "351299622063-pnoeo4i8sedn3g7d84tcmui7s4q6u3cp.apps.googleusercontent.com",
+          "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCg-quqkr2heh93Ej5z4ekOO3p58hoaw94"
+          "current_key": "AIzaSyDiTlDGRFcFmTbksDOV2xIOTFTqCBxpGj0"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "351299622063-pnoeo4i8sedn3g7d84tcmui7s4q6u3cp.apps.googleusercontent.com",
+              "client_id": "764849138700-d03ktdu020uqt8aav30gekqqdo5id68m.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

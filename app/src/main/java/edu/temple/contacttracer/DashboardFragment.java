@@ -52,6 +52,7 @@ public class DashboardFragment extends Fragment {
             @Override
             public void onClick(View v) {
                 parent.startService();
+
             }
         });
 

@@ -4,7 +4,10 @@ import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.location.Location;
@@ -59,6 +62,15 @@ public class MyLocationService extends Service {
             public void onProviderEnabled(String provider) {}
             public void onProviderDisabled(String provider) {}
         };
+
+        BroadcastReceiver broadcastReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                String text = intent.getStringExtra("data");
+                Log.d("Broadcast Test", text);
+            }
+        };
+        registerReceiver(broadcastReceiver, new IntentFilter(MyFirebaseService.INTENT_ACTION));
 
     }
 
