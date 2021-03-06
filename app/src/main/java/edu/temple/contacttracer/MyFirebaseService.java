@@ -19,6 +19,7 @@ import org.json.JSONObject;
 public class MyFirebaseService extends FirebaseMessagingService {
 
     public static final String INTENT_ACTION = "edu.temple.contacttracer.INTENT_ACTION";
+    public static final String INTENT_POSITIVE = "edu.temple.contacttracer.INTENT_POSITIVE";
     private NotificationManagerCompat notificationManagerCompat;
 
 
@@ -27,6 +28,7 @@ public class MyFirebaseService extends FirebaseMessagingService {
 
     public static void subscribeToTopics(){
         subscribeToTopic("TRACKING");
+        subscribeToTopic("TRACING");
     }
     private static void subscribeToTopic(String topic){
         FirebaseMessaging.getInstance().subscribeToTopic(topic).addOnCompleteListener(
@@ -45,14 +47,27 @@ public class MyFirebaseService extends FirebaseMessagingService {
     @Override
     public void onMessageReceived(@NonNull RemoteMessage remoteMessage) {
         super.onMessageReceived(remoteMessage);
+        Log.d("Broadcast", "Message Received");
+        if(remoteMessage.getFrom().equals("/topics/TRACKING")){
+            Log.d("Broadcast", "TRACKING MESSAGE RECEIVED");
 
-        Log.d("Broadcast", "Firebase Service");
+            String data = remoteMessage.getData().get("payload");
+            Intent firebaseMessage = new Intent();
+            firebaseMessage.setAction(MyFirebaseService.INTENT_ACTION);
+            firebaseMessage.putExtra("data", data);
+            sendBroadcast(firebaseMessage);
+        }
+        else if(remoteMessage.getFrom().equals("/topics/TRACING")){
+            Log.d("Broadcast", "TRACING MESSAGE RECEIVED");
+            String data = remoteMessage.getData().get("payload");
+            Intent firebaseMessage = new Intent();
+            firebaseMessage.setAction(MyFirebaseService.INTENT_POSITIVE);
+            firebaseMessage.putExtra("data", data);
+            sendBroadcast(firebaseMessage);
 
-        String data = remoteMessage.getData().get("payload");
-        Intent firebaseMessage = new Intent();
-        firebaseMessage.setAction(MyFirebaseService.INTENT_ACTION);
-        firebaseMessage.putExtra("data", data);
-        sendBroadcast(firebaseMessage);
+        }
+
+
 
 
     }

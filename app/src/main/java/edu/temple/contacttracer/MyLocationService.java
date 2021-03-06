@@ -33,10 +33,13 @@ import com.android.volley.toolbox.HttpHeaderParser;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.UnsupportedEncodingException;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -46,6 +49,7 @@ public class MyLocationService extends Service {
     LocationManager locationManager;
     LocationListener locationListener;
     BroadcastReceiver broadcastReceiver;
+    BroadcastReceiver broadcastReceiver2;
 
     Location lastLocation;
 
@@ -63,6 +67,8 @@ public class MyLocationService extends Service {
     public IBinder onBind(Intent intent) {
         throw new UnsupportedOperationException("Not yet implemented");
     }
+
+
 
     @Override
     public void onCreate() {
@@ -96,6 +102,8 @@ public class MyLocationService extends Service {
             }
         };
 
+
+
         broadcastReceiver = new BroadcastReceiver() {
             @Override
             public void onReceive(Context context, Intent intent) {
@@ -107,8 +115,10 @@ public class MyLocationService extends Service {
             }
         };
         registerReceiver(broadcastReceiver, new IntentFilter(MyFirebaseService.INTENT_ACTION));
+        //registerReceiver(broadcastReceiver2, new IntentFilter(MyFirebaseService.INTENT_POSITIVE));
 
     }
+
 
 
     private void onBroadcastReceived(String data) {

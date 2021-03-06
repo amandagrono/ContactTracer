@@ -63,7 +63,7 @@ public class LocationContainer implements Serializable {
         userLocations.add(location);
     }
 
-    private ArrayList<MyLocation> getLocations(){
+    public ArrayList<MyLocation> getLocations(){
         return locations;
     }
     private ArrayList<MyLocation> getUserLocations(){

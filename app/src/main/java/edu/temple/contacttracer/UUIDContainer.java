@@ -54,7 +54,7 @@ public class UUIDContainer implements Serializable {
         Log.d("Total IDs", String.valueOf(UUIDs.size()));
     }
 
-    private ArrayList<MyUUID> getUUIDs() {
+    public ArrayList<MyUUID> getUUIDs() {
         return UUIDs;
     }
 
